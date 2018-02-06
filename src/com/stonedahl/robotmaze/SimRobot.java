@@ -5,6 +5,8 @@ package com.stonedahl.robotmaze;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Scanner;
 
 
@@ -28,6 +30,7 @@ public class SimRobot {
 	public static final int MAZE_WIDTH = 5;
 	public static final int MAZE_HEIGHT = 3;
 	public static final float MAZE_CELL_WIDTH_IN_METERS = 1.12f;
+	private Queue<Character> previousActionQ;
 	private ArrayList<Character> previousActions;
 	private char[][] grid;
 
@@ -52,6 +55,7 @@ public class SimRobot {
 		this.robotY = 2;
 		this.grid = new char[MAZE_WIDTH*4+1][MAZE_HEIGHT*4+1];
 		this.animationDelay = animationDelay;
+		this.previousActionQ = new PriorityQueue<Character>();
 		this.previousActions = new ArrayList<Character>();
 		loadMaze(mazeFileName);
 		printWorld();
@@ -237,6 +241,18 @@ public class SimRobot {
 				this.previousActions.add(i, '^');
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * @return the front action of the queue
+	 */
+	public char removeQueue(){
+		return this.previousActionQ.remove();
+	}
+	
+	public void addQueue(char action){
+		this.previousActionQ.add(action);
 	}
 
 	
