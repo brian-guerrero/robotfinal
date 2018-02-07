@@ -6,34 +6,46 @@ public class SimMazeSolver {
 
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
 
-		SimRobot simRobot = new SimRobot("maze4.txt", 100); // 500 ms animation
+		SimRobot simRobot = new SimRobot("maze6 .txt", 300); // 500 ms animation
 															// delay...
+		
+		simRobot.neckRight90();
+		float distRight = simRobot.getDistanceMeasurement();
+		simRobot.neckLeft90();
+		float distStraight = simRobot.getDistanceMeasurement();
+		simRobot.neckLeft90();
+		float distLeft = simRobot.getDistanceMeasurement();
+		simRobot.neckRight90();
 
 		//current pathfinding, just goes towards the most white space it sees
 		while (simRobot.colorSensorSeesGoal() != true) {
+			float oldDistRight = distRight;
+			float oldDistLeft = distLeft;
 			simRobot.neckRight90();
-			float distRight = simRobot.getDistanceMeasurement();
+			distRight = simRobot.getDistanceMeasurement();
 			simRobot.neckLeft90();
-			float distStraight = simRobot.getDistanceMeasurement();
+			distStraight = simRobot.getDistanceMeasurement();
 			simRobot.neckLeft90();
-			float distLeft = simRobot.getDistanceMeasurement();
+			distLeft = simRobot.getDistanceMeasurement();
 			System.out.print("Distances Sensed:  R: " + distRight + " S: " + distStraight + " L:" + distLeft);
 			simRobot.neckRight90();
 			Thread.sleep(2000);
 
-			if (distLeft < distRight && distRight > distStraight) {
+			if (distLeft < distRight && distRight > oldDistRight) {
 				System.out.println("Turn right");
 				simRobot.right90();
-			} else if (distLeft > distRight && distLeft > distStraight) {
+				simRobot.forwardOneCell();
+			} else if (distLeft > distRight && distLeft > oldDistLeft) {
 				System.out.println("Turn left.");
 				simRobot.left90();
+				simRobot.forwardOneCell();
 			} else if (distStraight > 1) {
 				System.out.println("We can go straight");
 				// Note: the move should always succeed, because we checked for
 				// walls ahead first and
 				// the simulator distance sensor is always accurate (unlike the
 				// physical sensor!)
-				boolean moveSuceeded = simRobot.forwardOneCell();
+				simRobot.forwardOneCell();
 				// if moveSuceeded were false, that would mean it hit a wall
 				// (and the robot's bump sensor was activated)
 
@@ -43,7 +55,12 @@ public class SimMazeSolver {
 
 					break; // break out of the FOR loop early
 				}
-			} else if (distLeft == distRight){
+			} else if (distRight > distStraight){
+				simRobot.right90();
+			} else if (distLeft > distStraight){
+				simRobot.left90();
+			}
+			else if (distLeft == distRight){
 				simRobot.right90();
 				simRobot.right90();
 			}
