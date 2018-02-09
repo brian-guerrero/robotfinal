@@ -1,4 +1,5 @@
 import java.io.FileNotFoundException;
+import java.util.PriorityQueue;
 import java.util.Stack;
 
 import com.stonedahl.robotmaze.SimRobot;
@@ -7,7 +8,8 @@ public class SimMazeSolver {
 
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
 		Stack movesMade =new Stack();
-		SimRobot simRobot = new SimRobot("maze6.txt", 300); // 500 ms animation
+		PriorityQueue reversedActions = new PriorityQueue();
+		SimRobot simRobot = new SimRobot("maze1.txt", 100); // 500 ms animation
 																// delay...
 		
 		simRobot.neckRight90();
@@ -60,8 +62,7 @@ public class SimMazeSolver {
 					System.out.println("FOUND GOAL!");
 					System.out.println("Now, if only I could find my way home...");
 					movesMade.push('G');
-					Stack reversedActions = reverseActions(movesMade);
-					retrace(reversedActions, simRobot);
+//					retrace(reversedActions, simRobot);
 					break; // break out of the FOR loop early
 				}
 			} else if (distRight > distStraight) {
@@ -73,11 +74,32 @@ public class SimMazeSolver {
 			} else if (distLeft == distRight) {
 				simRobot.right90();
 				simRobot.right90();
-				movesMade.push('>');
-				movesMade.push('>');
 			}
 			moves++;
 			}
+		System.out.println("Got to the goal " + reversedActions.isEmpty());
+		System.out.println("Moves made: " + movesMade);
+		reversedActions = reverseActions(movesMade);
+		while(!(reversedActions.isEmpty())){
+			char temp = (char) reversedActions.remove();
+			System.out.println("Next move: " + temp);
+			if (temp=='<'){
+				simRobot.left90();
+				simRobot.forwardOneCell();
+				
+			}
+			else if (temp=='>'){
+				simRobot.right90();
+				simRobot.forwardOneCell();
+			
+			}
+			else if (temp == '^'){
+				simRobot.forwardOneCell();
+			} else {//temp == 'G'
+				simRobot.right90();
+				simRobot.right90();
+			}
+		}
 
 			/*
 			 * Pseudocode from the internet that may be useful while(myPos !=
@@ -111,27 +133,26 @@ public class SimMazeSolver {
 	/**
 	 * reverses the order of the previous actions so the robot can find its way home
 	 */
-	public static Stack reverseActions(Stack movesMade){
-		Stack reversedActions = new Stack();
-		int length = movesMade.size();
+	public static PriorityQueue reverseActions(Stack movesMade){
+		System.out.println("called reverseActions function");
+		PriorityQueue reversedActions = new PriorityQueue();
 		//TODO: do something to get rid of unnecessary moves
 		while(!movesMade.isEmpty()){
+			System.out.println("Making the reversed actions");
 			char temp = (char) movesMade.pop();
 			if(temp=='G'){//do nothing
 			}
 			else if (temp=='<'){
-				reversedActions.push('>');
-				break;
+				reversedActions.add('>');
 			}
 			else if (temp=='>'){
-				reversedActions.push('>');
-				break;
+				reversedActions.add('<');
 			}
 			else{// (temp=='^'){
-				reversedActions.push('^');
-				break;
+				reversedActions.add('^');
 			}
 		}
+		System.out.println("reversedActions: " + reversedActions);
 		return reversedActions;
 	}
 	public static void retrace(Stack reversedActions, SimRobot simRobot){
