@@ -8,7 +8,7 @@ public class SimMazeSolver {
 
 		SimRobot simRobot = new SimRobot("maze1.txt", 300); // 500 ms animation
 																// delay...
-
+		
 		simRobot.neckRight90();
 		float distRight = simRobot.getDistanceMeasurement();
 		simRobot.neckLeft90();
@@ -100,6 +100,7 @@ public class SimMazeSolver {
 		//Backtracking method pseudo found online
 /*	
 		// Get the start location (x,y) and try to solve the maze
+		public static int counter = 0;
 		public void solve(int x, int y) {
 			if (step(x,y)) {
 				maze[x][y] = 'S';
@@ -109,24 +110,21 @@ public class SimMazeSolver {
 		// Backtracking method
 		public boolean step (int x, int y) {
 			
-			counter++;
-			
-			//System.out.println(this.toString());
-			
+			counter++;			
 			//** Accept case - we found the exit **
-			if (maze[x][y] == 'X') {
+			if (maze[x][y] == 'G') {
 				return true;
 			}
 			
 			//** Reject case - we hit a wall or our path **
-			if (maze[x][y] == '#' || maze[x][y] == '*') {
+			if (maze[x][y] == 'X' || maze[x][y] == '.') {
 				return false;
 			}
 			
 			/** Backtracking Step **
 			
 			// Mark this location as part of our path
-			maze[x][y] = '*';
+			maze[x][y] = '.';
 			boolean result;	
 			
 			// Try to go Right
@@ -165,18 +163,6 @@ public class SimMazeSolver {
 			}
 			return output;
 		}
-		
-		public static void main(String[] args) {
-			Maze m = new Maze();
-			// Locate the exit
-			m.maze[1][1] = 'X';
-			
-			// Start solving the maze from (8, 1)
-			m.solve(8, 1);
-			System.out.println(m);
-			System.out.println("Total calls: " + m.counter);
-		}
-
 	}*/
 	}
 
