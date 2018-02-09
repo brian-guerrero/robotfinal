@@ -1,12 +1,13 @@
 import java.io.FileNotFoundException;
+import java.util.Stack;
 
 import com.stonedahl.robotmaze.SimRobot;
 
 public class SimMazeSolver {
 
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
-
-		SimRobot simRobot = new SimRobot("maze1.txt", 300); // 500 ms animation
+		Stack movesMade =new Stack();
+		SimRobot simRobot = new SimRobot("maze6.txt", 300); // 500 ms animation
 																// delay...
 		
 		simRobot.neckRight90();
@@ -38,10 +39,12 @@ public class SimMazeSolver {
 				System.out.println("Turn right");
 				simRobot.right90();
 				simRobot.forwardOneCell();
+				movesMade.push('>');
 			} else if (distLeft > distRight && distLeft > oldDistLeft) {
 				System.out.println("Turn left.");
 				simRobot.left90();
 				simRobot.forwardOneCell();
+				movesMade.push('<');
 			} else if (distStraight > 1) {
 				System.out.println("We can go straight");
 				// Note: the move should always succeed, because we checked for
@@ -49,24 +52,32 @@ public class SimMazeSolver {
 				// the simulator distance sensor is always accurate (unlike the
 				// physical sensor!)
 				simRobot.forwardOneCell();
+				movesMade.push('^');
 				// if moveSuceeded were false, that would mean it hit a wall
 				// (and the robot's bump sensor was activated)
 
 				if (simRobot.colorSensorSeesGoal()) {
 					System.out.println("FOUND GOAL!");
 					System.out.println("Now, if only I could find my way home...");
-
+					movesMade.push('G');
+					Stack reversedActions = reverseActions(movesMade);
+					retrace(reversedActions, simRobot);
 					break; // break out of the FOR loop early
 				}
 			} else if (distRight > distStraight) {
 				simRobot.right90();
+				movesMade.push('>');
 			} else if (distLeft > distStraight) {
 				simRobot.left90();
+				movesMade.push('<');
 			} else if (distLeft == distRight) {
 				simRobot.right90();
 				simRobot.right90();
+				movesMade.push('>');
+				movesMade.push('>');
 			}
 			moves++;
+			}
 
 			/*
 			 * Pseudocode from the internet that may be useful while(myPos !=
@@ -97,13 +108,58 @@ public class SimMazeSolver {
 			 * 
 			 */
 		}
+	/**
+	 * reverses the order of the previous actions so the robot can find its way home
+	 */
+	public static Stack reverseActions(Stack movesMade){
+		Stack reversedActions = new Stack();
+		int length = movesMade.size();
+		//TODO: do something to get rid of unnecessary moves
+		while(!movesMade.isEmpty()){
+			char temp = (char) movesMade.pop();
+			if(temp=='G'){//do nothing
+			}
+			else if (temp=='<'){
+				reversedActions.push('>');
+				break;
+			}
+			else if (temp=='>'){
+				reversedActions.push('>');
+				break;
+			}
+			else{// (temp=='^'){
+				reversedActions.push('^');
+				break;
+			}
+		}
+		return reversedActions;
+	}
+	public static void retrace(Stack reversedActions, SimRobot simRobot){
+		while(!reversedActions.isEmpty()){
+			char temp = (char) reversedActions.pop();
+			if (temp=='<'){
+				simRobot.left90();
+				simRobot.forwardOneCell();
+				break;
+			}
+			else if (temp=='>'){
+				simRobot.right90();
+				simRobot.forwardOneCell();
+				break;
+			}
+			else{// (temp=='^'){
+				simRobot.forwardOneCell();
+				break;
+			}
+		}
+	}
 		//Backtracking method pseudo found online
-/*	
 		// Get the start location (x,y) and try to solve the maze
-		public static int counter = 0;
+		/*public static int counter = 0;
 		public void solve(int x, int y) {
 			if (step(x,y)) {
 				maze[x][y] = 'S';
+				
 			}
 		}
 		
@@ -121,7 +177,7 @@ public class SimMazeSolver {
 				return false;
 			}
 			
-			/** Backtracking Step **
+			/** Backtracking Step *
 			
 			// Mark this location as part of our path
 			maze[x][y] = '.';
@@ -144,7 +200,7 @@ public class SimMazeSolver {
 			if (result) { return true;}		
 			
 			
-			/** Deadend - this location can't be part of the solution **
+			/** Deadend - this location can't be part of the solution *
 			
 			// Unmark this location
 			maze[x][y] = ' ';
@@ -162,8 +218,8 @@ public class SimMazeSolver {
 				output += "\n";
 			}
 			return output;
-		}
-	}*/
+		}*/
+	
 	}
 
-}
+

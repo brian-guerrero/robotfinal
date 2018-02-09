@@ -55,7 +55,6 @@ public class SimRobot {
 		this.robotY = 2;
 		this.grid = new char[MAZE_WIDTH*4+1][MAZE_HEIGHT*4+1];
 		this.animationDelay = animationDelay;
-		this.previousActionQ = new PriorityQueue<Character>();
 		this.previousActions = new ArrayList<Character>();
 		loadMaze(mazeFileName);
 		printWorld();
@@ -218,43 +217,4 @@ public class SimRobot {
 	public ArrayList<Character> getPreviousActions(){
 		return this.previousActions;
 	}
-	
-	/**
-	 * reverses the order of the previous actions so the robot can find its way home
-	 */
-	public void reverseActions(){
-		int length = this.previousActions.size();
-		char[] tempArray = new char[length];
-		for (int i = 0; i < length; i++){
-			tempArray[length - 1 - i] = this.previousActions.get(i);
-		}
-		//TODO: do something to get rid of unnecessary moves
-		for (int i = 0; i < length; i++){
-			switch(tempArray[i]){
-			case '<':
-				this.previousActions.add(i, '>');
-				break;
-			case '>':
-				this.previousActions.add(i, '<');
-				break;
-			default://'^'
-				this.previousActions.add(i, '^');
-			}
-		}
-	}
-	
-	/**
-	 * 
-	 * @return the front action of the queue
-	 */
-	public char removeQueue(){
-		return this.previousActionQ.remove();
-	}
-	
-	public void addQueue(char action){
-		this.previousActionQ.add(action);
-	}
-
-	
-
 }
