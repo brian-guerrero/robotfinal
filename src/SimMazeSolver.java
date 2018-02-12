@@ -8,7 +8,8 @@ public class SimMazeSolver {
 
 	static char direction = '^';
 	static Point coordinates = new Point();
-	static boolean isBacktracking = false; // false is forward searching, true is backtracking
+	static boolean isBacktracking = false; // false is forward searching, true
+											// is backtracking
 	public static final double GODIST = .4;
 	static ArrayList<Point> pointsVisited = new ArrayList<Point>();
 	private static Stack<Character> movesMade;
@@ -17,7 +18,7 @@ public class SimMazeSolver {
 		movesMade = new Stack<Character>();
 		coordinates.x = 0;
 		coordinates.y = 0;// home
-		pointsVisited.add(coordinates);
+		pointsVisited.add(new Point(coordinates.x, coordinates.y));
 		ArrayBlockingQueue<Character> reversedActions;
 		SimRobot simRobot = new SimRobot("maze2.txt", 100); // 500 ms animation
 															// delay...
@@ -34,11 +35,12 @@ public class SimMazeSolver {
 			System.out.print("Distances Sensed:  R: " + distRight + " S: " + distStraight + " L:" + distLeft);
 			simRobot.neckRight90();
 			if (isVisited() && !isBacktracking) {
-				if (distRight > distStraight) {
+				System.out.println("We've been here before and we're not backtracking");
+				if (distRight > GODIST) {
 					simRobot.right90();
 					changeDirection('>');
 					movesMade.push('>');
-				} else if (distLeft > distStraight) {
+				} else if (distLeft > GODIST) {
 					simRobot.left90();
 					changeDirection('<');
 					movesMade.push('<');
@@ -46,30 +48,43 @@ public class SimMazeSolver {
 					isBacktracking = true;
 				}
 			} else if (isBacktracking) {
+				System.out.println("We is backtracking");
 				while (isBacktracking) {
+					System.out.println("We is still backtracking");
+					simRobot.neckRight90();
+					distRight = simRobot.getDistanceMeasurement();
+					simRobot.neckLeft90();
+					distStraight = simRobot.getDistanceMeasurement();
+					simRobot.neckLeft90();
+					distLeft = simRobot.getDistanceMeasurement();
+					simRobot.neckRight90();
 					isBacktracking = backtrack(simRobot, distStraight, distRight, distLeft);
-					//System.out.println(isBacktracking);
-					//System.out.println(pointsVisited.toString());
+					// System.out.println(isBacktracking);
+					// System.out.println(pointsVisited.toString());
 				}
 			} else {
+				System.out.println("Regular operations " + hasVisitedStraight());
 				if (!hasVisitedStraight() && distStraight > GODIST) {
-					simRobot.forwardOneCell();
+					boolean moveSucceeded = simRobot.forwardOneCell();
 					movesMade.push('^');
-					changeCoord();
+					changeCoord(moveSucceeded);
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				} else if (!hasVisitedRight() && distRight > GODIST) {
 					simRobot.right90();
-					simRobot.forwardOneCell();
+					boolean moveSucceeded = simRobot.forwardOneCell();
 					changeDirection('>');
 					movesMade.push('>');
 					movesMade.push('^');
-					changeCoord();
+					changeCoord(moveSucceeded);
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				} else if (!hasVisitedLeft() && distLeft > GODIST) {
 					simRobot.left90();
-					simRobot.forwardOneCell();
+					boolean moveSucceeded = simRobot.forwardOneCell();
 					changeDirection('<');
 					movesMade.push('<');
 					movesMade.push('^');
-					changeCoord();
+					changeCoord(moveSucceeded);
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				} else {
 					simRobot.right90();
 					simRobot.right90();
@@ -103,26 +118,26 @@ public class SimMazeSolver {
 				simRobot.left90();
 				changeDirection('<');
 				if (distLeft > GODIST) {
-					simRobot.forwardOneCell();
-					changeCoord();
-					pointsVisited.add(new Point(coordinates));
+					boolean moveSucceeded = simRobot.forwardOneCell();
+					changeCoord(moveSucceeded);
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				}
 			} else if (temp == '>') {
 				simRobot.right90();
 				changeDirection('>');
 				if (distRight > GODIST) {
-					simRobot.forwardOneCell();
-					changeCoord();
+					boolean moveSucceeded = simRobot.forwardOneCell();
+					changeCoord(moveSucceeded);
 					isBacktracking = false;
-					pointsVisited.add(new Point(coordinates));
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				}
 
 			} else if (temp == '^') {
 				if (distStraight > GODIST) {
-					simRobot.forwardOneCell();
-					changeCoord();
+					boolean moveSucceeded = simRobot.forwardOneCell();
+					changeCoord(moveSucceeded);
 					isBacktracking = false;
-					pointsVisited.add(new Point(coordinates));
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				}
 			}
 		}
@@ -173,15 +188,17 @@ public class SimMazeSolver {
 		}
 	}
 
-	public static void changeCoord() {
-		if (direction == '^') {
-			coordinates.y++;
-		} else if (direction == '>') {
-			coordinates.x++;
-		} else if (direction == 'v') {
-			coordinates.y--;
-		} else {// direction is '<'
-			coordinates.x--;
+	public static void changeCoord(boolean moveSucceeded) {
+		if (moveSucceeded) {
+			if (direction == '^') {
+				coordinates.y++;
+			} else if (direction == '>') {
+				coordinates.x++;
+			} else if (direction == 'v') {
+				coordinates.y--;
+			} else {// direction is '<'
+				coordinates.x--;
+			}
 		}
 	}
 
@@ -208,110 +225,127 @@ public class SimMazeSolver {
 	}
 
 	public static boolean hasVisitedStraight() {
+		Point point = new Point(coordinates.x, coordinates.y);
 		if (direction == '^') {
-			if (pointsVisited.contains(new Point(coordinates.x, coordinates.y + 1))) {
+			point.y++;
+			System.out.println(point);
+			System.out.println("Points visited: " + pointsVisited);
+			System.out.println(pointsVisited.contains(point) + " and its index is " + pointsVisited.indexOf(point));
+			if (pointsVisited.contains(point)) {
 				return true;
 			}
-		}
-		if (direction == '<') {
-			if (pointsVisited.contains(new Point(coordinates.x - 1, coordinates.y))) {
+		} else if (direction == '<') {
+			point.x--;
+			if (pointsVisited.contains(point)) {
 				return true;
 			}
-			if (direction == '>') {
-				if (pointsVisited.contains(new Point(coordinates.x + 1, coordinates.y))) {
-					return true;
-				}
-			} else {
-				if (pointsVisited.contains(new Point(coordinates.x, coordinates.y - 1))) {
-					return true;
-				}
+		} else if (direction == '>') {
+			point.x++;
+			if (pointsVisited.contains(point)) {
+				return true;
+			}
+		} else {
+			point.y--;
+			if (pointsVisited.contains(point)) {
+				return true;
 			}
 		}
 		return false;
 	}
 
 	public static boolean hasVisitedLeft() {
+		Point point = new Point(coordinates.x, coordinates.y);
 		if (direction == '^') {
-			if (pointsVisited.contains(new Point(coordinates.x - 1, coordinates.y))) {
+			point.x--;
+			if (pointsVisited.contains(point)) {
 				return true;
 			}
-		}
-		if (direction == '<') {
-			if (pointsVisited.contains(new Point(coordinates.x, coordinates.y - 1))) {
+		} else if (direction == '<') {
+			point.y--;
+			if (pointsVisited.contains(point)) {
 				return true;
 			}
-			if (direction == '>') {
-				if (pointsVisited.contains(new Point(coordinates.x, coordinates.y + 1))) {
-					return true;
-				}
-			} else {
-				if (pointsVisited.contains(new Point(coordinates.x + 1, coordinates.y))) {
-					return true;
-				}
+		} else if (direction == '>') {
+			point.y++;
+			if (pointsVisited.contains(point)) {
+				return true;
+			}
+		} else {
+			point.x++;
+			if (pointsVisited.contains(point)) {
+				return true;
 			}
 		}
 		return false;
 	}
 
 	public static boolean hasVisitedRight() {
+		Point point = new Point(coordinates.x, coordinates.y);
 		if (direction == '^') {
-			if (pointsVisited.contains(new Point(coordinates.x + 1, coordinates.y))) {
+			point.x++;
+			if (pointsVisited.contains(point)) {
 				return true;
 			}
-		}
-		if (direction == '<') {
-			if (pointsVisited.contains(new Point(coordinates.x, coordinates.y + 1))) {
+		} else if (direction == '<') {
+			point.y++;
+			if (pointsVisited.contains(point)) {
 				return true;
 			}
-			if (direction == '>') {
-				if (pointsVisited.contains(new Point(coordinates.x, coordinates.y - 1))) {
-					return true;
-				}
-			} else {
-				if (pointsVisited.contains(new Point(coordinates.x - 1, coordinates.y))) {
-					return true;
-				}
+		} else if (direction == '>') {
+			point.y--;
+			if (pointsVisited.contains(point)) {
+				return true;
+			}
+		} else {
+			point.x--;
+			if (pointsVisited.contains(point)) {
+				return true;
 			}
 		}
 		return false;
 	}
 
 	public static boolean backtrack(SimRobot simRobot, float distStraight, float distRight, float distLeft) {
+		System.out.println("hindsight is 20/20");
 		if (distStraight > GODIST) {
-			System.out.println("We can go straight");
+			System.out.println("Backtracking and going straight");
 			// Note: the move should always succeed, because we checked for
 			// walls ahead first and
 			// the simulator distance sensor is always accurate (unlike the
 			// physical sensor!)
-			simRobot.forwardOneCell();
-			changeCoord();
-			pointsVisited.add(new Point(coordinates));
+			boolean moveSucceeded = simRobot.forwardOneCell();
+			changeCoord(moveSucceeded);
+			pointsVisited.add(new Point(coordinates.x, coordinates.y));
 			movesMade.push('^');
 			// if moveSuceeded were false, that would mean it hit a wall
 			// (and the robot's bump sensor was activated)
 		}
 		if (!hasVisitedRight() && distRight > GODIST) {
+			System.out.println("we should go right");
 			simRobot.right90();
 			changeDirection('>');
 			movesMade.push('>');
 			return false;
 		} else if (!hasVisitedLeft() && distLeft > GODIST) {
+			System.out.println("we should go left");
 			simRobot.left90();
 			changeDirection('<');
 			movesMade.push('<');
 			return false;
 		} else { // all directions visited
 			if (distRight > GODIST) {
+				System.out.println("we can go right");
 				simRobot.right90();
 				changeDirection('>');
 				movesMade.push('>');
 				return true;
 			} else if (distLeft > GODIST) {
+				System.out.println("we can go left");
 				simRobot.left90();
 				changeDirection('<');
 				movesMade.push('<');
 				return true;
-			}
+			} // else this runs again and goes straight one
 		}
 		return true;
 	}
