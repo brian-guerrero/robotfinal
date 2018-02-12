@@ -19,7 +19,7 @@ public class SimMazeSolver {
 		coordinates.x = 0;
 		coordinates.y = 0;// home
 		pointsVisited.add(new Point(coordinates.x, coordinates.y));
-		SimRobot simRobot = new SimRobot("maze2.txt", 100); // 500 ms animation
+		SimRobot simRobot = new SimRobot("maze3.txt", 100); // 500 ms animation
 															// delay...
 		float distRight = 0, distStraight=0, distLeft=0;
 		Thread.sleep(2000);
@@ -290,41 +290,54 @@ public class SimMazeSolver {
 
 	public static boolean backtrack(SimRobot simRobot, float distStraight, float distRight, float distLeft) {
 		System.out.println("hindsight is 20/20");
-		
-		if (!hasVisitedRight() && distRight > GODIST) {
-			System.out.println("we should go right");
+		if(distStraight < GODIST && distLeft < GODIST && distRight < GODIST){
+			simRobot.right90();
 			simRobot.right90();
 			changeDirection('>');
-			movesMade.push('>');
-			return false;
-		} else if (!hasVisitedLeft() && distLeft > GODIST) {
-			System.out.println("we should go left");
-			simRobot.left90();
-			changeDirection('<');
-			movesMade.push('<');
-			return false;
-		} else { // all directions visited
-			if (distRight > GODIST) {
-				System.out.println("we can go right");
+			changeDirection('>');
+		}else{
+			if (!hasVisitedRight() && distRight > GODIST) {
+				System.out.println("we should go right");
 				simRobot.right90();
 				changeDirection('>');
 				movesMade.push('>');
-				boolean moveSucceeded = simRobot.forwardOneCell();
-				changeCoord(moveSucceeded);
-				pointsVisited.add(new Point(coordinates.x, coordinates.y));
-				movesMade.push('^');
-				return true;
-			} else if (distLeft > GODIST) {
-				System.out.println("we can go left");
+				return false;
+			} else if (!hasVisitedLeft() && distLeft > GODIST) {
+				System.out.println("we should go left");
 				simRobot.left90();
 				changeDirection('<');
 				movesMade.push('<');
+				return false;
+			} else if (!hasVisitedStraight() && distStraight > GODIST){
 				boolean moveSucceeded = simRobot.forwardOneCell();
 				changeCoord(moveSucceeded);
 				pointsVisited.add(new Point(coordinates.x, coordinates.y));
 				movesMade.push('^');
-				return true;
-			} // else this runs again and goes straight one
+				return false;
+			}
+			else { // all directions visited
+				if (distRight > GODIST) {
+					System.out.println("we can go right");
+					simRobot.right90();
+					changeDirection('>');
+					movesMade.push('>');
+					boolean moveSucceeded = simRobot.forwardOneCell();
+					changeCoord(moveSucceeded);
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
+					movesMade.push('^');
+					return true;
+				} else if (distLeft > GODIST) {
+					System.out.println("we can go left");
+					simRobot.left90();
+					changeDirection('<');
+					movesMade.push('<');
+					boolean moveSucceeded = simRobot.forwardOneCell();
+					changeCoord(moveSucceeded);
+					pointsVisited.add(new Point(coordinates.x, coordinates.y));
+					movesMade.push('^');
+					return true;
+				} // else this runs again and goes straight one
+			}
 		}
 		if (distStraight > GODIST) {
 			System.out.println("Backtracking and going straight");
