@@ -8,152 +8,33 @@ public class SimMazeSolver {
 	
 static char direction = '^';
 static Point coordinates = new Point();
-static int state = 0; //0 is searching, 1 is backtracking
+static boolean isBacktracking = false; //false is forward searching, true is backtracking
+public static final double GODIST = .4;
 static ArrayList<Point> map = new ArrayList<Point>();
+private static Stack<Character> movesMade;
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
-		Stack<Character> movesMade =new Stack<Character>();
+		movesMade =new Stack<Character>();
 		coordinates.x = 0;
 		coordinates.y = 0;//home
 		map.add(coordinates);
 		ArrayBlockingQueue<Character> reversedActions;
-		SimRobot simRobot = new SimRobot("maze1.txt", 100); // 500 ms animation
+		SimRobot simRobot = new SimRobot("maze2.txt", 100); // 500 ms animation
 																// delay...
-		simRobot.neckRight90();
-		float distRight = simRobot.getDistanceMeasurement();
-		simRobot.neckLeft90();
-		float distStraight = simRobot.getDistanceMeasurement();
-		simRobot.neckLeft90();
-		float distLeft = simRobot.getDistanceMeasurement();
-		simRobot.neckRight90();
+		float distRight,distStraight,distLeft;
 		Thread.sleep(2000);
 		int moves = 1;
 		// current pathfinding, just goes towards the most white space it sees
 		while (simRobot.colorSensorSeesGoal() != true) {
-			float oldDistRight = distRight;
-			float oldDistLeft = distLeft;
-			if (moves > 1) {
-				simRobot.neckRight90();
-				distRight = simRobot.getDistanceMeasurement();
-				simRobot.neckLeft90();
-				distStraight = simRobot.getDistanceMeasurement();
-				simRobot.neckLeft90();
-				distLeft = simRobot.getDistanceMeasurement();
-				System.out.print("Distances Sensed:  R: " + distRight + " S: " + distStraight + " L:" + distLeft);
-				simRobot.neckRight90();
-				System.out.println(isVisited());
-			}
-				if (isVisited() && state == 0){
-					if (distRight > distStraight) {
-						simRobot.right90();
-						changeDirection('>');
-						movesMade.push('>');
-					} else if (distLeft > distStraight) {
-						simRobot.left90();
-						changeDirection('<');
-						movesMade.push('<');
-					} 
-					else if (distLeft == distRight) {
-//						simRobot.right90();
-//						changeDirection('>');
-//						simRobot.right90();
-//						changeDirection('>');
-//						movesMade.push('>');
-//						movesMade.push('>');
-						state = 1;
-					}
-				} else if (state == 1){
-					if (distStraight > 1) {
-						System.out.println("We can go straight");
-						// Note: the move should always succeed, because we checked for
-						// walls ahead first and
-						// the simulator distance sensor is always accurate (unlike the
-						// physical sensor!)
-						simRobot.forwardOneCell();
-						changeCoord();
-						state=0;
-						Point temp = new Point();
-						temp.x = coordinates.x;
-						temp.y = coordinates.y;
-						//map.set(map.size() -1, temp);
-						map.add(map.size()-1, temp);
-						movesMade.push('^');
-						// if moveSuceeded were false, that would mean it hit a wall
-						// (and the robot's bump sensor was activated)
-
-					} else if (distRight > distStraight) {
-						simRobot.right90();
-						changeDirection('>');
-						movesMade.push('>');
-					} else if (distLeft > distStraight) {
-						simRobot.left90();
-						changeDirection('<');
-						movesMade.push('<');
-					} else if (distLeft == distRight) {
-						simRobot.right90();
-						changeDirection('>');
-						simRobot.right90();
-						changeDirection('>');
-						movesMade.push('>');
-						movesMade.push('>');
-					}
-				}else{
-				Thread.sleep(2000);
-				if (distLeft < distRight && distRight > oldDistRight) {
-					System.out.println("Turn right");
-					simRobot.right90();
-					changeDirection('>');
-					simRobot.forwardOneCell();
-					changeCoord();
-					state = 0;
-					Point temp = new Point();
-					temp.x = coordinates.x;
-					temp.y = coordinates.y;
-					//map.set(map.size() -1, temp);
-					map.add(map.size()-1, temp);
-					movesMade.push('>');
-					movesMade.push('^');
-					state = 0;
-				} else if (distLeft > distRight && distLeft > oldDistLeft) {
-					System.out.println("Turn left.");
-					simRobot.left90();
-					changeDirection('<');
-					simRobot.forwardOneCell();
-					changeCoord();
-					state=0;
-					Point temp = new Point();
-					temp.x = coordinates.x;
-					temp.y = coordinates.y;
-					//map.set(map.size() -1, temp);
-					map.add(map.size()-1, temp);
-					movesMade.push('<');
-					movesMade.push('^');
-					state = 0;
-				} else if (distStraight > 1) {
-					System.out.println("We can go straight");
-					// Note: the move should always succeed, because we checked for
-					// walls ahead first and
-					// the simulator distance sensor is always accurate (unlike the
-					// physical sensor!)
-					simRobot.forwardOneCell();
-					changeCoord();
-					state=0;
-					Point temp = new Point();
-					temp.x = coordinates.x;
-					temp.y = coordinates.y;
-					//map.set(map.size() -1, temp);
-					map.add(map.size()-1, temp);
-					movesMade.push('^');
-					// if moveSuceeded were false, that would mean it hit a wall
-					// (and the robot's bump sensor was activated)
-	
-					if (simRobot.colorSensorSeesGoal()) {
-						System.out.println("FOUND GOAL!");
-						System.out.println("Now, if only I could find my way home...");
-						movesMade.push('G');
-						
-						break; // break out of the FOR loop early
-					}
-				} else if (distRight > distStraight) {
+			simRobot.neckRight90();
+			distRight = simRobot.getDistanceMeasurement();
+			simRobot.neckLeft90();
+			distStraight = simRobot.getDistanceMeasurement();
+			simRobot.neckLeft90();
+			distLeft = simRobot.getDistanceMeasurement();
+			System.out.print("Distances Sensed:  R: " + distRight + " S: " + distStraight + " L:" + distLeft);
+			simRobot.neckRight90();
+			if (isVisited() && !isBacktracking){
+				if (distRight > distStraight) {
 					simRobot.right90();
 					changeDirection('>');
 					movesMade.push('>');
@@ -161,15 +42,48 @@ static ArrayList<Point> map = new ArrayList<Point>();
 					simRobot.left90();
 					changeDirection('<');
 					movesMade.push('<');
-				} else if (distLeft == distRight) {
-					simRobot.right90();
-					changeDirection('>');
-					simRobot.right90();
-					changeDirection('>');
-					movesMade.push('>');
-					movesMade.push('>');
-					state = 1;
+				} 
+				else if (distLeft == distRight) {
+//						simRobot.right90();
+//						changeDirection('>');
+//						simRobot.right90();
+//						changeDirection('>');
+//						movesMade.push('>');
+//						movesMade.push('>');
+					isBacktracking = true;
 				}
+				} else if (isBacktracking){
+					while(isBacktracking){
+						isBacktracking = backtrack(simRobot, distStraight, distRight, distLeft);
+					}
+				} else{
+					if(!hasVisitedStraight()&& distStraight>GODIST){
+						simRobot.forwardOneCell();
+						movesMade.push('^');
+						changeCoord();
+					}else if (!hasVisitedRight() && distRight > GODIST){
+						simRobot.right90();
+						simRobot.forwardOneCell();
+						changeDirection('>');
+						movesMade.push('>');
+						movesMade.push('^');
+						changeCoord();
+					}else if (!hasVisitedLeft() && distLeft > GODIST){
+						simRobot.left90();
+						simRobot.forwardOneCell();
+						changeDirection('<');
+						movesMade.push('<');
+						movesMade.push('^');
+						changeCoord();
+					}else{
+						simRobot.right90();
+						simRobot.right90();
+						movesMade.push('>');
+						movesMade.push('>');
+						changeDirection('>');
+						changeDirection('>');
+						isBacktracking = true;
+					}
 			}
 			moves++;
 		}
@@ -195,7 +109,7 @@ static ArrayList<Point> map = new ArrayList<Point>();
 			if (temp=='<'){
 				simRobot.left90();
 				changeDirection('<');
-				if (distLeft > 1){
+				if (distLeft > .4){
 					simRobot.forwardOneCell();
 					changeCoord();
 					Point temp1 = new Point();
@@ -208,10 +122,10 @@ static ArrayList<Point> map = new ArrayList<Point>();
 			else if (temp=='>'){
 				simRobot.right90();
 				changeDirection('>');
-				if (distRight > 1){
+				if (distRight > .4){
 					simRobot.forwardOneCell();
 					changeCoord();
-					state = 0;
+					isBacktracking = false;
 					Point temp1 = new Point();
 					temp1.x = coordinates.x;
 					temp1.y = coordinates.y;
@@ -221,10 +135,10 @@ static ArrayList<Point> map = new ArrayList<Point>();
 			
 			}
 			else if (temp == '^'){
-				if (distStraight > 1){
+				if (distStraight > .4){
 					simRobot.forwardOneCell();
 					changeCoord();
-					state = 0;
+					isBacktracking = false;
 					Point temp1 = new Point();
 					temp1.x = coordinates.x;
 					temp1.y = coordinates.y;
@@ -315,6 +229,110 @@ static ArrayList<Point> map = new ArrayList<Point>();
 		}
 		System.out.println("reversedActions: " + reversedActions);
 		return reversedActions;
+	}
+	
+	public static boolean hasVisitedStraight(){
+		if(direction == '^'){
+			if(map.contains(new Point(coordinates.x, coordinates.y+1))){
+				return true;
+			}
+		} if (direction == '<'){
+			if(map.contains(new Point(coordinates.x-1, coordinates.y))){
+				return true;
+		} if (direction == '>'){
+			if(map.contains(new Point(coordinates.x+1, coordinates.y))){
+				return true;
+			}
+		} else {
+			if(map.contains(new Point(coordinates.x, coordinates.y-1))){
+				return true;
+			}
+		}
+	}
+		return false;
+	}
+	
+	public static boolean hasVisitedLeft(){
+		if(direction == '^'){
+			if(map.contains(new Point(coordinates.x-1, coordinates.y))){
+				return true;
+			}
+		} if (direction == '<'){
+			if(map.contains(new Point(coordinates.x, coordinates.y-1))){
+				return true;
+		} if (direction == '>'){
+			if(map.contains(new Point(coordinates.x, coordinates.y+1))){
+				return true;
+			}
+		} else {
+			if(map.contains(new Point(coordinates.x+1, coordinates.y))){
+				return true;
+			}
+		}
+	}
+		return false;
+	}
+	
+	public static boolean hasVisitedRight(){
+		if(direction == '^'){
+			if(map.contains(new Point(coordinates.x+1, coordinates.y))){
+				return true;
+			}
+		} if (direction == '<'){
+			if(map.contains(new Point(coordinates.x, coordinates.y+1))){
+				return true;
+		} if (direction == '>'){
+			if(map.contains(new Point(coordinates.x, coordinates.y-1))){
+				return true;
+			}
+		} else {
+			if(map.contains(new Point(coordinates.x-1, coordinates.y))){
+				return true;
+			}
+		}
+	}
+		return false;
+	}
+	
+	public static boolean backtrack(SimRobot simRobot, float distStraight, float distRight, float distLeft){
+		if (distStraight > GODIST) {
+			System.out.println("We can go straight");
+			// Note: the move should always succeed, because we checked for
+			// walls ahead first and
+			// the simulator distance sensor is always accurate (unlike the
+			// physical sensor!)
+			simRobot.forwardOneCell();
+			changeCoord();
+			map.add(new Point(coordinates));
+			movesMade.push('^');
+			// if moveSuceeded were false, that would mean it hit a wall
+			// (and the robot's bump sensor was activated)
+
+		}
+		if (!hasVisitedRight() && distRight > GODIST) {
+			simRobot.right90();
+			changeDirection('>');
+			movesMade.push('>');
+			return false;
+		} else if (!hasVisitedLeft() && distLeft > GODIST) {
+			simRobot.left90();
+			changeDirection('<');
+			movesMade.push('<');
+			return false;
+		} else { //all directions visited
+			if (distRight > GODIST){
+				simRobot.right90();
+				changeDirection('>');
+				movesMade.push('>');
+				return true;
+			} else if (distLeft > GODIST) {
+				simRobot.left90();
+				changeDirection('<');
+				movesMade.push('<');
+				return true;
+			}
+		}
+		return true;
 	}
 }
 

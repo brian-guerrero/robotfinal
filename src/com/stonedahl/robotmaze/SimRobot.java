@@ -29,7 +29,7 @@ public class SimRobot {
 
 	public static final int MAZE_WIDTH = 5;
 	public static final int MAZE_HEIGHT = 3;
-	public static final float MAZE_CELL_WIDTH_IN_METERS = 1.12f;
+	public static final float MAZE_CELL_WIDTH_IN_METERS = 0.37f;
 	private Queue<Character> previousActionQ;
 	private ArrayList<Character> previousActions;
 	private char[][] grid;
