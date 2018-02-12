@@ -307,19 +307,7 @@ public class SimMazeSolver {
 
 	public static boolean backtrack(SimRobot simRobot, float distStraight, float distRight, float distLeft) {
 		System.out.println("hindsight is 20/20");
-		if (distStraight > GODIST) {
-			System.out.println("Backtracking and going straight");
-			// Note: the move should always succeed, because we checked for
-			// walls ahead first and
-			// the simulator distance sensor is always accurate (unlike the
-			// physical sensor!)
-			boolean moveSucceeded = simRobot.forwardOneCell();
-			changeCoord(moveSucceeded);
-			pointsVisited.add(new Point(coordinates.x, coordinates.y));
-			movesMade.push('^');
-			// if moveSuceeded were false, that would mean it hit a wall
-			// (and the robot's bump sensor was activated)
-		}
+		
 		if (!hasVisitedRight() && distRight > GODIST) {
 			System.out.println("we should go right");
 			simRobot.right90();
@@ -346,6 +334,19 @@ public class SimMazeSolver {
 				movesMade.push('<');
 				return true;
 			} // else this runs again and goes straight one
+		}
+		if (distStraight > GODIST) {
+			System.out.println("Backtracking and going straight");
+			// Note: the move should always succeed, because we checked for
+			// walls ahead first and
+			// the simulator distance sensor is always accurate (unlike the
+			// physical sensor!)
+			boolean moveSucceeded = simRobot.forwardOneCell();
+			changeCoord(moveSucceeded);
+			pointsVisited.add(new Point(coordinates.x, coordinates.y));
+			movesMade.push('^');
+			// if moveSuceeded were false, that would mean it hit a wall
+			// (and the robot's bump sensor was activated)
 		}
 		return true;
 	}
