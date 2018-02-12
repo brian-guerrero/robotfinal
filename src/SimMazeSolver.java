@@ -13,16 +13,15 @@ public class SimMazeSolver {
 	public static final double GODIST = .4;
 	static ArrayList<Point> pointsVisited = new ArrayList<Point>();
 	private static Stack<Character> movesMade;
-
+	static ArrayBlockingQueue<Character> reversedActions;
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
 		movesMade = new Stack<Character>();
 		coordinates.x = 0;
 		coordinates.y = 0;// home
 		pointsVisited.add(new Point(coordinates.x, coordinates.y));
-		ArrayBlockingQueue<Character> reversedActions;
 		SimRobot simRobot = new SimRobot("maze2.txt", 100); // 500 ms animation
 															// delay...
-		float distRight, distStraight, distLeft;
+		float distRight = 0, distStraight=0, distLeft=0;
 		Thread.sleep(2000);
 		// current pathfinding, just goes towards the most white space it sees
 		while (simRobot.colorSensorSeesGoal() != true) {
@@ -34,6 +33,7 @@ public class SimMazeSolver {
 			distLeft = simRobot.getDistanceMeasurement();
 			System.out.print("Distances Sensed:  R: " + distRight + " S: " + distStraight + " L:" + distLeft);
 			simRobot.neckRight90();
+			
 			if (isVisited() && !isBacktracking) {
 				System.out.println("We've been here before and we're not backtracking");
 				if (distRight > GODIST) {
@@ -101,37 +101,24 @@ public class SimMazeSolver {
 		simRobot.right90();
 		changeDirection('>');
 		System.out.println("Moves made: " + movesMade);
+		retrace(simRobot, distRight, distStraight, distLeft);
+		System.out.println(coordinates.x + " , " + coordinates.y);
+		
+	}
+
+	public static void retrace(SimRobot simRobot, float distRight, float distStraight, float distLeft){
 		reversedActions = new ArrayBlockingQueue<Character>(movesMade.size());
 		reversedActions = reverseActions(movesMade);
-		System.out.println(coordinates.x + " , " + coordinates.y);
 		while (coordinates.x != 0 || coordinates.y != 0) {
 			char temp = (char) reversedActions.remove();
-			simRobot.neckRight90();
-			distRight = simRobot.getDistanceMeasurement();
-			simRobot.neckLeft90();
 			distStraight = simRobot.getDistanceMeasurement();
-			simRobot.neckLeft90();
-			distLeft = simRobot.getDistanceMeasurement();
-			simRobot.neckRight90();
 			System.out.println("Next move: " + temp);
 			if (temp == '<') {
 				simRobot.left90();
 				changeDirection('<');
-				if (distLeft > GODIST) {
-					boolean moveSucceeded = simRobot.forwardOneCell();
-					changeCoord(moveSucceeded);
-					pointsVisited.add(new Point(coordinates.x, coordinates.y));
-				}
 			} else if (temp == '>') {
 				simRobot.right90();
 				changeDirection('>');
-				if (distRight > GODIST) {
-					boolean moveSucceeded = simRobot.forwardOneCell();
-					changeCoord(moveSucceeded);
-					isBacktracking = false;
-					pointsVisited.add(new Point(coordinates.x, coordinates.y));
-				}
-
 			} else if (temp == '^') {
 				if (distStraight > GODIST) {
 					boolean moveSucceeded = simRobot.forwardOneCell();
@@ -142,7 +129,6 @@ public class SimMazeSolver {
 			}
 		}
 	}
-
 	public static boolean isVisited() {
 		boolean visited = false;
 		Point temp = new Point(coordinates.x, coordinates.y);
@@ -158,9 +144,6 @@ public class SimMazeSolver {
 		if (pointsVisited.contains(temp)) {
 			visited = true;
 		}
-		// for (Point element : map){
-		// System.out.println(element.x + ", " + element.y);
-		// }
 		return visited;
 	}
 
@@ -326,12 +309,20 @@ public class SimMazeSolver {
 				simRobot.right90();
 				changeDirection('>');
 				movesMade.push('>');
+				boolean moveSucceeded = simRobot.forwardOneCell();
+				changeCoord(moveSucceeded);
+				pointsVisited.add(new Point(coordinates.x, coordinates.y));
+				movesMade.push('^');
 				return true;
 			} else if (distLeft > GODIST) {
 				System.out.println("we can go left");
 				simRobot.left90();
 				changeDirection('<');
 				movesMade.push('<');
+				boolean moveSucceeded = simRobot.forwardOneCell();
+				changeCoord(moveSucceeded);
+				pointsVisited.add(new Point(coordinates.x, coordinates.y));
+				movesMade.push('^');
 				return true;
 			} // else this runs again and goes straight one
 		}
