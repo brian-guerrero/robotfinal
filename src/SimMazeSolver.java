@@ -6,14 +6,15 @@ import com.stonedahl.robotmaze.SimRobot;
 
 public class SimMazeSolver {
 
-	static char direction = '^';
-	static Point coordinates = new Point();
+	static char direction = '^'; //used to keep track of direction of robot throughout search
+	static Point coordinates = new Point(); //used to keep track of coordinate of robot's location
 	static boolean isBacktracking = false; // false is forward searching, true
 											// is backtracking
 	public static final double GODIST = .4;
-	static ArrayList<Point> pointsVisited = new ArrayList<Point>();
-	private static Stack<Character> movesMade;
-	static ArrayBlockingQueue<Character> reversedActions;
+	static ArrayList<Point> pointsVisited = new ArrayList<Point>(); //keep track of all legal locations robot has visited during search
+	private static Stack<Character> movesMade; //directional moves the robot has made during search
+	static ArrayBlockingQueue<Character> reversedActions; // used as a reverse of movesMade, once robot finds goal, reversedActions
+														 //used to backtrack to origin
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
 		movesMade = new Stack<Character>();
 		coordinates.x = 0;
@@ -33,21 +34,23 @@ public class SimMazeSolver {
 			distLeft = simRobot.getDistanceMeasurement();
 			System.out.print("Distances Sensed:  R: " + distRight + " S: " + distStraight + " L:" + distLeft);
 			simRobot.neckRight90();
-			
+			//we have visited this coordinate and we in searching state
 			if (isVisited() && !isBacktracking) {
 				System.out.println("We've been here before and we're not backtracking");
+				//try going right
 				if (distRight > GODIST) {
 					simRobot.right90();
 					changeDirection('>');
 					movesMade.push('>');
-				} else if (distLeft > GODIST) {
+				} else if (distLeft > GODIST) {//try going left
 					simRobot.left90();
 					changeDirection('<');
 					movesMade.push('<');
-				} else if (distLeft == distRight) {
+				} else if (distLeft == distRight) { //stuck, change to backtracking state
 					isBacktracking = true;
 				}
-			} else if (isBacktracking) {
+			} else if (isBacktracking) {//are we currently backtracking?
+										//if so, continuously check our surrounding distances and call backtrack until we are no longer backtracking
 				System.out.println("We is backtracking");
 				while (isBacktracking) {
 					System.out.println("We is still backtracking");
@@ -59,11 +62,10 @@ public class SimMazeSolver {
 					distLeft = simRobot.getDistanceMeasurement();
 					simRobot.neckRight90();
 					isBacktracking = backtrack(simRobot, distStraight, distRight, distLeft);
-					// System.out.println(isBacktracking);
-					// System.out.println(pointsVisited.toString());
 				}
 			} else {
 				System.out.println("Regular operations " + hasVisitedStraight());
+				//check all three directions whether they have been visited
 				if (!hasVisitedStraight() && distStraight > GODIST) {
 					boolean moveSucceeded = simRobot.forwardOneCell();
 					movesMade.push('^');
@@ -100,12 +102,16 @@ public class SimMazeSolver {
 		changeDirection('>');
 		simRobot.right90();
 		changeDirection('>');
-		System.out.println("Moves made: " + movesMade);
-		retrace(simRobot, distRight, distStraight, distLeft);
-		System.out.println(coordinates.x + " , " + coordinates.y);
-		
+		retrace(simRobot, distRight, distStraight, distLeft);		
 	}
 
+	/**
+	 * This method retraces the robot's steps to return to the origin.
+	 * @param simRobot
+	 * @param distRight
+	 * @param distStraight
+	 * @param distLeft
+	 */
 	public static void retrace(SimRobot simRobot, float distRight, float distStraight, float distLeft){
 		reversedActions = new ArrayBlockingQueue<Character>(movesMade.size());
 		reversedActions = reverseActions(movesMade);
@@ -129,6 +135,11 @@ public class SimMazeSolver {
 			}
 		}
 	}
+	/**
+	 * 
+	 * @return whether tbe robot has visited the surrounding points based 
+	 * on the current direction of the robot.
+	 */
 	public static boolean isVisited() {
 		boolean visited = false;
 		Point temp = new Point(coordinates.x, coordinates.y);
@@ -147,6 +158,11 @@ public class SimMazeSolver {
 		return visited;
 	}
 
+	/**
+	 * When called, the robot has turned and the direction that is being tracked
+	 * at the top of the program must be updated accordingly.
+	 * @param turn
+	 */
 	public static void changeDirection(char turn) {
 		if (turn == '<') {
 			if (direction == '^') {
@@ -171,6 +187,11 @@ public class SimMazeSolver {
 		}
 	}
 
+	/**
+	 * When a successful move has been made, this method
+	 * changes the coordinates of the robot
+	 * @param moveSucceeded
+	 */
 	public static void changeCoord(boolean moveSucceeded) {
 		if (moveSucceeded) {
 			if (direction == '^') {
@@ -207,6 +228,7 @@ public class SimMazeSolver {
 		return reversedActions;
 	}
 
+	//perform methods to see if the robot has visited straight, left or right
 	public static boolean hasVisitedStraight() {
 		Point point = new Point(coordinates.x, coordinates.y);
 		if (direction == '^') {
@@ -287,7 +309,15 @@ public class SimMazeSolver {
 		}
 		return false;
 	}
-
+/**
+ * This method is used to backtrack through the maze to return
+ * to an appropriate spot where the robot can prevent getting stuck.
+ * @param simRobot
+ * @param distStraight
+ * @param distRight
+ * @param distLeft
+ * @return
+ */
 	public static boolean backtrack(SimRobot simRobot, float distStraight, float distRight, float distLeft) {
 		System.out.println("hindsight is 20/20");
 		if(distStraight < GODIST && distLeft < GODIST && distRight < GODIST){
@@ -341,16 +371,10 @@ public class SimMazeSolver {
 		}
 		if (distStraight > GODIST) {
 			System.out.println("Backtracking and going straight");
-			// Note: the move should always succeed, because we checked for
-			// walls ahead first and
-			// the simulator distance sensor is always accurate (unlike the
-			// physical sensor!)
 			boolean moveSucceeded = simRobot.forwardOneCell();
 			changeCoord(moveSucceeded);
 			pointsVisited.add(new Point(coordinates.x, coordinates.y));
 			movesMade.push('^');
-			// if moveSuceeded were false, that would mean it hit a wall
-			// (and the robot's bump sensor was activated)
 		}
 		return true;
 	}
